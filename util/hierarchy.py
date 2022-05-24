@@ -76,8 +76,6 @@ def get_hierarchy(arr, method='ward', metric='euclidean'):
 
         res_dict[DEND_LVL] = df_final_res
 
-
-
     class Cluster:
         def __init__(self, value):
             self.value = value
@@ -144,7 +142,6 @@ def get_hierarchy(arr, method='ward', metric='euclidean'):
     global currId
     global ids
 
-
     def buildTree(root: Cluster, lvl, ids=set()):
 
         currId = random.randint(0, 99999999)
@@ -172,4 +169,11 @@ def get_hierarchy(arr, method='ward', metric='euclidean'):
 
     buildTree(root, lvl)
 
-    return root
+    return {"payload": root}
+
+
+def get_available_tags():
+    df = pd.read_csv('util/data.csv')
+    left_array_unique = list(df['lhs'].drop_duplicates().to_numpy())
+
+    return {"payload": left_array_unique}
