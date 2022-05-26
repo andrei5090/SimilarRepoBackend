@@ -36,7 +36,7 @@ def get_hierarchy(arr, method='ward', metric='euclidean'):
         with open("data.pickle", "wb") as outfile:
             pickle.dump(X, outfile)
 
-    dendogram_lvls = [60, 50, 40, 30, 20, 10, 5, 4, 3, 2, 1]
+    dendogram_lvls = arr
 
     Z = linkage(X, method=method, metric=metric)
 
