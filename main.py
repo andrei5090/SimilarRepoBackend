@@ -1,10 +1,14 @@
 from fastapi import FastAPI, HTTPException
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+import api
 
 from util.hierarchy import get_hierarchy, get_available_tags
 
 app = FastAPI()
+
+
+app.include_router(api.router)
 
 origins = [
     "http://localhost:8080",
@@ -18,8 +22,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# method='ward',
 
 @app.get("/hierarchy")
 async def generate_hierarchy(cuts: int = None, method: str = 'ward', metric: str = 'euclidean'):
