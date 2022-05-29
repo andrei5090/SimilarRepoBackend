@@ -36,6 +36,7 @@ def update_feedback(session: Session, _id: int, info_update: CreateAndUpdateFeed
     feedback_info.githubPreferences = info_update.githubPreferences
     feedback_info.ownPreferences = info_update.ownPreferences
     feedback_info.githubLinks = info_update.githubLinks
+    feedback_info.extraInfo = info_update.extraInfo
     session.commit()
     session.refresh(feedback_info)
 

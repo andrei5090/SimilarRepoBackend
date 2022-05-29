@@ -7,6 +7,7 @@ class CreateAndUpdateFeedback(BaseModel):
     ownLinks : dict
     githubPreferences : dict
     ownPreferences : dict
+    extraInfo: dict
 
 class Feedback(CreateAndUpdateFeedback):
     id: int

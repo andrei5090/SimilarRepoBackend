@@ -11,3 +11,4 @@ class FeedbackInfo(Base):
     ownLinks = Column(JSON, nullable=False)
     githubPreferences = Column(JSON, nullable=False)
     ownPreferences = Column(JSON, nullable=False)
+    extraInfo = Column(JSON, nullable=False)
