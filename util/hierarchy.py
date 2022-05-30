@@ -132,17 +132,18 @@ def get_hierarchy(arr, method='ward', metric='euclidean'):
                 return True
             return False
 
+    ids = set()
     root = Cluster("root")
     lvl = len(dendogram_lvls) - 1
     big_clusters = res_dict[dendogram_lvls[lvl]]['lvl' + str(dendogram_lvls[lvl])]
     root.content = big_clusters[0]
 
-    root.value = Cluster.getEncoding(0, 0, len(big_clusters), big_clusters[0])
+    id = random.randint(0, 99999999)
+    ids.add(id)
 
-    global currId
-    global ids
+    root.value = Cluster.getEncoding(0, id, len(big_clusters), big_clusters[0])
 
-    def buildTree(root: Cluster, lvl, ids=set()):
+    def buildTree(root: Cluster, lvl, ids):
 
         currId = random.randint(0, 99999999)
 
@@ -165,9 +166,9 @@ def get_hierarchy(arr, method='ward', metric='euclidean'):
                 root.children.append(currCluster)
 
         for ch in root.children:
-            buildTree(ch, lvl - 1)
+            buildTree(ch, lvl - 1, ids)
 
-    buildTree(root, lvl)
+    buildTree(root, lvl, ids)
 
     return {"payload": root}
 
