@@ -22,10 +22,8 @@ class Feedback:
 
         return response
 
-    # API endpoint to add feedback to database
     @router.post("/feedback")
     def add_feedback(self, feedback_info: CreateAndUpdateFeedback):
-
         try:
             feedback_info = create_feedback(self.session, feedback_info)
             return feedback_info

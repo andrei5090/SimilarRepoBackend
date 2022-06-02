@@ -1,12 +1,15 @@
 from fastapi import FastAPI, HTTPException
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
 import api
+from fastapi_cache.decorator import cache
 
 from util.hierarchy import get_hierarchy, get_available_tags
+from util.google import google_search
 
 app = FastAPI()
-
 
 app.include_router(api.router)
 
@@ -23,7 +26,13 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def startup():
+    FastAPICache.init(InMemoryBackend())
+
+
 @app.get("/hierarchy")
+@cache(expire=86400)
 async def generate_hierarchy(cuts: int = None, method: str = 'ward', metric: str = 'euclidean'):
     if cuts is None:
         cuts = [520]
@@ -65,6 +74,11 @@ async def generate_hierarchy(cuts: int = None, method: str = 'ward', metric: str
 @app.get("/tags")
 async def generate_hierarchy():
     return get_available_tags()
+
+
+@app.get("/search")
+async def search_on_google(query: str = '', pages: int = 5):
+    return google_search(query, pages)
 
 
 if __name__ == "__main__":
