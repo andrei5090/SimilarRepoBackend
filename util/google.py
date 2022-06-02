@@ -15,7 +15,7 @@ def google_search(query, pages=5):
 
     for page in range(1, pages):
         start = get_start_no(page)
-        url = f"https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={SEARCH_ENGINE_ID}&q={query}&start={start}"
+        url = f"https://www.googleapis.com/customsearch/v1/siterestrict?key={API_KEY}&cx={SEARCH_ENGINE_ID}&q={query}&start={start}"
         data = requests.get(url).json()
 
         search_items = data.get("items")
