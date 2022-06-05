@@ -13,14 +13,10 @@ app = FastAPI()
 
 app.include_router(api.router)
 
-origins = [
-    "http://localhost:8080",
-    "https://hierarchy-visualiser.herokuapp.com/"
-]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
