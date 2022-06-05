@@ -73,6 +73,7 @@ async def generate_hierarchy(cuts: int = None, method: str = 'ward', metric: str
 
 
 @app.get("/tags")
+@cache(expire=86400)
 async def generate_hierarchy():
     return get_available_tags()
 
