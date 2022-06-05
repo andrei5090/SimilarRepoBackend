@@ -15,6 +15,7 @@ app.include_router(api.router)
 
 origins = [
     "http://localhost:8080",
+    "https://hierarchy-visualiser.herokuapp.com/"
 ]
 
 app.add_middleware(
