@@ -2,9 +2,9 @@ from schemas import Feedback, CreateAndUpdateFeedback
 
 
 def convertInTime(millis):
-    seconds = (millis / 1000) % 60
-    minutes = (millis / (1000 * 60)) % 60
-    hours = (millis / (1000 * 60 * 60)) % 24
+    seconds, milliseconds = divmod(millis, 1000)
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
     return "{0} hours {1} minutes {2} seconds".format(round(hours), round(minutes), round(seconds))
 
 
