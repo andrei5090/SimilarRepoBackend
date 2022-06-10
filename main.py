@@ -13,7 +13,6 @@ app = FastAPI()
 
 app.include_router(api.router)
 
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -77,6 +76,7 @@ async def generate_hierarchy():
 @app.get("/search")
 async def search_on_google(query: str = '', pages: int = 5):
     return google_search(query, pages)
+
 
 
 if __name__ == "__main__":

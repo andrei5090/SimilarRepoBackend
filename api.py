@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from crud import *
 from database import get_db
 from schemas import Feedback, CreateAndUpdateFeedback, PaginatedFeedbackInfo
+from util.statistics import buildStatistics
 
 router = APIRouter()
 
@@ -27,6 +28,13 @@ class Feedback:
         try:
             feedback_info = create_feedback(self.session, feedback_info)
             return feedback_info
-        except Exception as cie:
-            raise HTTPException(**cie.__dict__)
+        except Exception as e:
+            raise HTTPException(**e.__dict__)
 
+    @router.get("/statistics")
+    async def get_statistics(self):
+        try:
+            feedback_list = buildStatistics(get_all_info(self.session, 99999, 0))
+            return feedback_list
+        except Exception as e:
+            raise HTTPException(**e.__dict__)
