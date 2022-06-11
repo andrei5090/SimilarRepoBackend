@@ -30,9 +30,10 @@ def getSearchResultStatisticsPerMethod(data, method, provider, resultObj, own=Tr
 
         totalEntries += 1
 
-    resultObj[method][provider]['emptyEntries'] = computePercentage(emptyEntries, totalEntries)
-    resultObj[method][provider]['nonEmptyEntries'] = 100 - resultObj[method][provider]['emptyEntries']
-    resultObj[method][provider]['avgNumberOfResults'] = noOfResults / totalEntries
+    res = round(computePercentage(emptyEntries, totalEntries))
+    resultObj[method][provider]['emptyEntries'] = str(res) + '%'
+    resultObj[method][provider]['nonEmptyEntries'] = str(100 - res) + '%'
+    resultObj[method][provider]['avgNumberOfResults'] = round(noOfResults / totalEntries, 1)
 
 
 def getSearchResultsStatistics(data):
