@@ -8,6 +8,47 @@ def convertInTime(millis):
     return "{0} hours {1} minutes {2} seconds".format(round(hours), round(minutes), round(seconds))
 
 
+def computePercentage(current, total):
+    return current * 100 / total
+
+
+def getSearchResultStatisticsPerMethod(data, method, provider, resultObj, own=True):
+    emptyEntries = 0
+    totalEntries = 0
+    noOfResults = 0
+
+    for feedback in data:
+        if own:
+            links = feedback.ownLinks['links']
+        else:
+            links = feedback.githubLinks[provider]['links']
+
+        if len(links) == 0:
+            emptyEntries += 1
+        else:
+            noOfResults += len(links)
+
+        totalEntries += 1
+
+    resultObj[method][provider]['emptyEntries'] = computePercentage(emptyEntries, totalEntries)
+    resultObj[method][provider]['nonEmptyEntries'] = 100 - resultObj[method][provider]['emptyEntries']
+    resultObj[method][provider]['avgNumberOfResults'] = noOfResults / totalEntries
+
+
+def getSearchResultsStatistics(data):
+    resultStatistics = {}
+    resultStatistics['searchWithTags'] = {'github': {}, 'google': {}}
+    resultStatistics['searchWithoutTags'] = {'github': {}}
+
+    # keys: githubLinks -> github, google -> links
+    # keys: ownLinks -> links
+    getSearchResultStatisticsPerMethod(data, 'searchWithTags', 'github', resultStatistics)
+    getSearchResultStatisticsPerMethod(data, 'searchWithTags', 'google', resultStatistics, own=False)
+    getSearchResultStatisticsPerMethod(data, 'searchWithoutTags', 'github', resultStatistics, own=False)
+
+    return resultStatistics
+
+
 def buildStatistics(data):
     userData = {}
     userStatistics = {}
@@ -58,4 +99,5 @@ def buildStatistics(data):
         scenarioStatistics[key]['averageTime'] = convertInTime(
             scenarioStatistics[key]['averageTime'] / scenarioStatistics[key]['noOfAnswers'])
 
-    return {'userStatistics': userStatistics, 'scenarioStatistics': scenarioStatistics}
+    return {'userStatistics': userStatistics, 'scenarioStatistics': scenarioStatistics,
+            'searchResultStatistics': getSearchResultsStatistics(data)}
