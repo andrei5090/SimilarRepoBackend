@@ -22,12 +22,13 @@ def createScenarioLinkMapping(links):
     return mapping
 
 
-def getAPK(links, preferences, k=3):
+def getAPK(links, preferences, k = 5):
     mapping = createScenarioLinkMapping(links)
     a = apk([mapping[x] for x in links], [mapping[x] for x in preferences], k)
     return a
 
 
+#TODO: Add hits
 def getSearchResultStatisticsPerMethod(data, method, provider, resultObj, own=True):
     emptyEntries = 0
     totalEntries = 0
