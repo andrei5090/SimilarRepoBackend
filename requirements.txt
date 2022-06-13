@@ -41,4 +41,3 @@ wincertstore==0.2
 gunicorn
 pandas
 recmetrics
-ml_metrics
