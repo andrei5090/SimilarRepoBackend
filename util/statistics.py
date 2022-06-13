@@ -1,4 +1,5 @@
 from schemas import Feedback, CreateAndUpdateFeedback
+from .metrics import apk
 
 
 def convertInTime(millis):
@@ -10,6 +11,21 @@ def convertInTime(millis):
 
 def computePercentage(current, total):
     return current * 100 / total
+
+
+def createScenarioLinkMapping(links):
+    mapping = {}
+    id = 0
+    for link in links:
+        mapping[link] = id
+        id += 1
+    return mapping
+
+
+def getAPK(links, preferences, k=3):
+    mapping = createScenarioLinkMapping(links)
+    a = apk([mapping[x] for x in links], [mapping[x] for x in preferences], k)
+    return a
 
 
 def getSearchResultStatisticsPerMethod(data, method, provider, resultObj, own=True):
@@ -70,11 +86,38 @@ def buildStatistics(data):
             userStatistics[key][userData[key][i].extraInfo['scenarioId']] = {}
 
     totalAvg = 0
+    githubWithTags = 0
+    githubWithoutTags = 0
+    googleWithTags = 0
+
     for key in userData:
         avg = 0
+        githubWithoutTagsAPK = 0
+        googleAPK = 0
+        githubWithTagsAPK = 0
         for i in range(0, len(userData[key])):
             time = 0
             id = userData[key][i].extraInfo['scenarioId']
+
+            # compute APK for each technique
+            userStatistics[key][id]['APKGithubWithoutTags'] = getAPK(
+                userData[key][i].githubLinks['github']['links'],
+                userData[key][i].githubPreferences['github']['checked']) if len(
+                userData[key][i].githubLinks['github']['links']) > 0 else 0
+
+            userStatistics[key][id]['APKGoogle'] = getAPK(
+                userData[key][i].githubLinks['google']['links'],
+                userData[key][i].githubPreferences['google']['checked']) if len(
+                userData[key][i].githubLinks['google']['links']) > 0 else 0
+
+            userStatistics[key][id]['APKGithubWithTags'] = getAPK(
+                userData[key][i].ownLinks['links'],
+                userData[key][i].ownPreferences['checked']) if len(
+                userData[key][i].ownLinks['links']) > 0 else 0
+
+            githubWithoutTagsAPK += userStatistics[key][id]['APKGithubWithoutTags']
+            githubWithTagsAPK += userStatistics[key][id]['APKGithubWithTags']
+            googleAPK += userStatistics[key][id]['APKGoogle']
 
             if i == 0:
                 time = userData[key][0].extraInfo['endTime'] - userData[key][0].extraInfo['startTimeTask']
@@ -92,13 +135,31 @@ def buildStatistics(data):
             scenarioStatistics[id]['noOfAnswers'] = scenarioStatistics[id]['noOfAnswers'] + 1
 
         userStatistics[key]['averageUserTime'] = convertInTime(avg / len(userData[key]))
+
+        userStatistics[key]['githubWithTagsAPKAverage'] = githubWithTagsAPK / len(userData[key])
+        userStatistics[key]['githubWithoutTagsAPKAverage'] = githubWithoutTagsAPK / len(userData[key])
+        userStatistics[key]['googleAPKAverage'] = googleAPK / len(userData[key])
+
+        githubWithTags += userStatistics[key]['githubWithTagsAPKAverage']
+
+        githubWithoutTags += userStatistics[key]['githubWithoutTagsAPKAverage']
+
+        googleWithTags += userStatistics[key]['googleAPKAverage']
+
         totalAvg += avg
 
     userStatistics['totalAverageTimeSpentOnEvaluation'] = convertInTime(totalAvg / len(userData.keys()))
+
+    searchStatistics = getSearchResultsStatistics(data)
 
     for key in scenarioStatistics:
         scenarioStatistics[key]['averageTime'] = convertInTime(
             scenarioStatistics[key]['averageTime'] / scenarioStatistics[key]['noOfAnswers'])
 
+        searchStatistics['searchWithTags']['github']['APK'] = githubWithTags / scenarioStatistics[key]['noOfAnswers']
+        searchStatistics['searchWithTags']['google']['APK'] = googleWithTags / scenarioStatistics[key]['noOfAnswers']
+        searchStatistics['searchWithoutTags']['github']['APK'] = githubWithoutTags / scenarioStatistics[key][
+            'noOfAnswers']
+
     return {'userStatistics': userStatistics, 'scenarioStatistics': scenarioStatistics,
-            'searchResultStatistics': getSearchResultsStatistics(data)}
+            'searchResultStatistics': searchStatistics}

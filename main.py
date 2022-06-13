@@ -74,7 +74,7 @@ async def generate_hierarchy():
 
 
 @app.get("/search")
-async def search_on_google(query: str = '', pages: int = 5):
+async def search_on_google(query: str = '', pages: int = 7):
     return google_search(query, pages)
 
 

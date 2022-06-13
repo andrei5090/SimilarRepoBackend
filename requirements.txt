@@ -40,3 +40,5 @@ uvicorn==0.17.6
 wincertstore==0.2
 gunicorn
 pandas
+recmetrics
+ml_metrics
