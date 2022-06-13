@@ -37,7 +37,7 @@ def google_search(query, pages=5):
 
     res_set = []
     for i in res:
-        if i.count('/') == 4 and i.count('?') == 0 and i.count('https://github.com') == 1 and i.count("topics") == 0 and i.count('/repos/blog/') == 0:
+        if i.count('/') == 4 and i.count('?') == 0 and i.count('https://github.com') == 1 and i.count("topics") == 0:
             res_set.append(i)
 
     return {'links': res_set}
