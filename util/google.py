@@ -20,21 +20,22 @@ def google_search(query, pages=7):
 
         search_items = data.get("items")
 
-        for i, search_item in enumerate(search_items, start=1):
-            try:
-                long_description = search_item["pagemap"]["metatags"][0]["og:description"]
-            except KeyError:
-                long_description = "N/A"
-            title = search_item.get("title")
-            snippet = search_item.get("snippet")
-            html_snippet = search_item.get("htmlSnippet")
-            link = search_item.get("link")
-            res.append(link)
-            # print("=" * 10, f"Result #{i + start - 1}", "=" * 10)
-            # print("Title:", title)
-            # print("Description:", snippet)
-            # print("Long description:", long_description)
-            # print("URL:", link, "\n")
+        if search_items:
+            for i, search_item in enumerate(search_items, start=1):
+                try:
+                    long_description = search_item["pagemap"]["metatags"][0]["og:description"]
+                except KeyError:
+                    long_description = "N/A"
+                title = search_item.get("title")
+                snippet = search_item.get("snippet")
+                html_snippet = search_item.get("htmlSnippet")
+                link = search_item.get("link")
+                res.append(link)
+                # print("=" * 10, f"Result #{i + start - 1}", "=" * 10)
+                # print("Title:", title)
+                # print("Description:", snippet)
+                # print("Long description:", long_description)
+                # print("URL:", link, "\n")
 
     res_set = []
     for i in res:

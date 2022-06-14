@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from crud import *
 from database import get_db
 from schemas import Feedback, CreateAndUpdateFeedback, PaginatedFeedbackInfo
-from util.statistics import buildStatistics
+from util.statistics import buildStatistics, getNotValidGoogleSearches
+import json
 
 router = APIRouter()
 
@@ -36,5 +37,29 @@ class Feedback:
         try:
             feedback_list = buildStatistics(get_all_info(self.session, 99999, 0))
             return feedback_list
+        except Exception as e:
+            raise HTTPException(**e.__dict__)
+
+    # flag invalid google data -> google programmable search error
+    @router.get("/flag")
+    async def flag_google_data(self):
+        try:
+            data = get_all_info(self.session, 99999, 0)
+            wrongId = getNotValidGoogleSearches(data)
+            for i in wrongId:
+                for feedback in data:
+                    if feedback.id == i:
+                        if 'valid' in feedback.githubLinks['google'] and feedback.githubLinks['google'][
+                            'valid'] == False:
+                            continue
+
+                        feedback.githubLinks['google']['valid'] = False
+                        a = FeedbackInfo()
+                        a.githubLinks = feedback.githubLinks.copy()
+                        b = FeedbackInfo()
+                        b.githubLinks = ''
+                        # feedback.githubLinks = feedback.githubLinks.copy
+                        update_feedback_google_links(self.session, feedback.id, b)
+                        update_feedback_google_links(self.session, feedback.id, a)
         except Exception as e:
             raise HTTPException(**e.__dict__)

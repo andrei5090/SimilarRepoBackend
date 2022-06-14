@@ -32,6 +32,8 @@ def update_feedback(session: Session, _id: int, info_update: CreateAndUpdateFeed
     if feedback_info is None:
         raise Exception
 
+    print("update_feedback", info_update.githubLinks)
+
     feedback_info.ownLinks = info_update.ownLinks
     feedback_info.githubPreferences = info_update.githubPreferences
     feedback_info.ownPreferences = info_update.ownPreferences
@@ -39,6 +41,21 @@ def update_feedback(session: Session, _id: int, info_update: CreateAndUpdateFeed
     feedback_info.extraInfo = info_update.extraInfo
     session.commit()
     session.refresh(feedback_info)
+
+
+    return feedback_info
+
+def update_feedback_google_links(session: Session, _id: int, info_update: CreateAndUpdateFeedback) -> FeedbackInfo:
+    feedback_info = get_feedback_info(session, _id)
+
+    if feedback_info is None:
+        raise Exception
+
+    print("update_feedback", info_update.githubLinks)
+    feedback_info.githubLinks = info_update.githubLinks
+    session.commit()
+    session.refresh(feedback_info)
+
 
     return feedback_info
 

@@ -1,5 +1,6 @@
 from schemas import Feedback, CreateAndUpdateFeedback
 from .metrics import apk
+from .google import google_search
 
 
 def convertInTime(millis):
@@ -22,13 +23,13 @@ def createScenarioLinkMapping(links):
     return mapping
 
 
-def getAPK(links, preferences, k = 5):
+def getAPK(links, preferences, k=5):
     mapping = createScenarioLinkMapping(links)
     a = apk([mapping[x] for x in links], [mapping[x] for x in preferences], k)
     return a
 
 
-#TODO: Add hits
+# TODO: Add hits
 def getSearchResultStatisticsPerMethod(data, method, provider, resultObj, own=True):
     emptyEntries = 0
     totalEntries = 0
@@ -68,6 +69,8 @@ def getSearchResultsStatistics(data):
 
 
 def buildStatistics(data):
+    # TODO: How many bachelor students
+    # TODO: How many male how many female
     userData = {}
     userStatistics = {}
     scenarioStatistics = {}
@@ -164,3 +167,19 @@ def buildStatistics(data):
 
     return {'userStatistics': userStatistics, 'scenarioStatistics': scenarioStatistics,
             'searchResultStatistics': searchStatistics}
+
+
+def getNotValidGoogleSearches(data):
+    totalCount = 0
+    invalidGoogleResultsId = []
+    for feedback in data:
+        query = ''
+        query += feedback.extraInfo['queryData']['queryText']
+        for i in feedback.extraInfo['queryData']['tags']:
+            query += ' ' + i
+
+        if len(feedback.githubLinks['google']['links']) == 0 and len(google_search(query)['links']) > 0:
+            totalCount += 1
+            invalidGoogleResultsId.append(feedback.id)
+
+    return invalidGoogleResultsId
