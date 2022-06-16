@@ -23,7 +23,7 @@ def createScenarioLinkMapping(links):
     return mapping
 
 
-def getAPK(links, preferences, k=5):
+def getAPK(links, preferences, k=3):
     mapping = createScenarioLinkMapping(links)
     a = apk([mapping[x] for x in links], [mapping[x] for x in preferences], k)
     return a
@@ -39,6 +39,9 @@ def getSearchResultStatisticsPerMethod(data, method, provider, resultObj, own=Tr
         if own:
             links = feedback.ownLinks['links']
         else:
+            if provider == 'google' and 'valid' in feedback.githubLinks[provider] and not \
+                    feedback.githubLinks[provider]['valid']:
+                continue
             links = feedback.githubLinks[provider]['links']
 
         if len(links) == 0:
@@ -99,6 +102,7 @@ def buildStatistics(data):
         githubWithoutTagsAPK = 0
         googleAPK = 0
         githubWithTagsAPK = 0
+        googleInvalidCount = 0
         for i in range(0, len(userData[key])):
             time = 0
             id = userData[key][i].extraInfo['scenarioId']
@@ -113,6 +117,10 @@ def buildStatistics(data):
                 userData[key][i].githubLinks['google']['links'],
                 userData[key][i].githubPreferences['google']['checked']) if len(
                 userData[key][i].githubLinks['google']['links']) > 0 else 0
+
+            if 'valid' in userData[key][i].githubLinks['google'] and not userData[key][i].githubLinks['google'][
+                'valid']:
+                googleInvalidCount += 1
 
             userStatistics[key][id]['APKGithubWithTags'] = getAPK(
                 userData[key][i].ownLinks['links'],
@@ -133,16 +141,20 @@ def buildStatistics(data):
                 avg += time
 
             if id not in scenarioStatistics:
-                scenarioStatistics[id] = {'averageTime': 0, 'noOfAnswers': 0}
+                scenarioStatistics[id] = {'averageTime': 0, 'noOfAnswers': 0, 'noOfAnswersGoogleValid': 0}
 
             scenarioStatistics[id]['averageTime'] = scenarioStatistics[id]['averageTime'] + time
             scenarioStatistics[id]['noOfAnswers'] = scenarioStatistics[id]['noOfAnswers'] + 1
+            if not ('valid' in userData[key][i].githubLinks['google'] and not userData[key][i].githubLinks['google'][
+                'valid']):
+                scenarioStatistics[id]['noOfAnswersGoogleValid'] += 1
 
         userStatistics[key]['averageUserTime'] = convertInTime(avg / len(userData[key]))
 
         userStatistics[key]['githubWithTagsAPKAverage'] = githubWithTagsAPK / len(userData[key])
         userStatistics[key]['githubWithoutTagsAPKAverage'] = githubWithoutTagsAPK / len(userData[key])
-        userStatistics[key]['googleAPKAverage'] = googleAPK / len(userData[key])
+        userStatistics[key]['googleAPKAverage'] = googleAPK / (len(userData[key]) - googleInvalidCount) if (len(
+            userData[key]) - googleInvalidCount) > 0 else 1
 
         githubWithTags += userStatistics[key]['githubWithTagsAPKAverage']
 
@@ -160,9 +172,10 @@ def buildStatistics(data):
         scenarioStatistics[key]['averageTime'] = convertInTime(
             scenarioStatistics[key]['averageTime'] / scenarioStatistics[key]['noOfAnswers'])
 
-        searchStatistics['searchWithTags']['github']['APK'] = githubWithTags / scenarioStatistics[key]['noOfAnswers']
-        searchStatistics['searchWithTags']['google']['APK'] = googleWithTags / scenarioStatistics[key]['noOfAnswers']
-        searchStatistics['searchWithoutTags']['github']['APK'] = githubWithoutTags / scenarioStatistics[key][
+        searchStatistics['searchWithTags']['github']['MAPK'] = githubWithTags / scenarioStatistics[key]['noOfAnswers']
+        searchStatistics['searchWithTags']['google']['MAPK'] = googleWithTags / scenarioStatistics[key][
+            'noOfAnswersGoogleValid']
+        searchStatistics['searchWithoutTags']['github']['MAPK'] = githubWithoutTags / scenarioStatistics[key][
             'noOfAnswers']
 
     return {'userStatistics': userStatistics, 'scenarioStatistics': scenarioStatistics,
