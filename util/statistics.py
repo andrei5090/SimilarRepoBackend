@@ -1,5 +1,5 @@
 from schemas import Feedback, CreateAndUpdateFeedback
-from .metrics import apk
+from .metrics import apk, precision_at_k, recall_at_k
 from .google import google_search
 
 
@@ -23,9 +23,25 @@ def createScenarioLinkMapping(links):
     return mapping
 
 
-def getAPK(links, preferences, k=3):
+def getAPK(links, preferences, k=5):
     mapping = createScenarioLinkMapping(links)
-    a = apk([mapping[x] for x in links], [mapping[x] for x in preferences], k)
+    a = apk([mapping[x] for x in preferences], [mapping[x] for x in links], k)
+    return a
+
+
+def getPrecisionK(links, preferences, k=5):
+    mapping = createScenarioLinkMapping(links)
+    y_true = [1 if x in preferences else 0 for x in links]
+    y_pred = [1 for x in links]
+    a = precision_at_k(y_true, y_pred, k)
+    return a
+
+
+def getRecallK(links, preferences, k=3):
+    # mapping = createScenarioLinkMapping(links)
+    y_true = [1 if x in preferences else 0 for x in links]
+    y_pred = [1 for x in links]
+    a = recall_at_k(y_true, y_pred, k)
     return a
 
 
@@ -34,20 +50,25 @@ def getSearchResultStatisticsPerMethod(data, method, provider, resultObj, own=Tr
     emptyEntries = 0
     totalEntries = 0
     noOfResults = 0
+    noOfCheckedResults = 0
 
     for feedback in data:
         if own:
             links = feedback.ownLinks['links']
+            checked_links = feedback.ownPreferences['checked']
         else:
             if provider == 'google' and 'valid' in feedback.githubLinks[provider] and not \
                     feedback.githubLinks[provider]['valid']:
                 continue
             links = feedback.githubLinks[provider]['links']
+            checked_links = feedback.githubPreferences[provider]['checked']
 
         if len(links) == 0:
             emptyEntries += 1
         else:
             noOfResults += len(links)
+
+        noOfCheckedResults += len(checked_links)
 
         totalEntries += 1
 
@@ -55,6 +76,9 @@ def getSearchResultStatisticsPerMethod(data, method, provider, resultObj, own=Tr
     resultObj[method][provider]['emptyEntries'] = str(res) + '%'
     resultObj[method][provider]['nonEmptyEntries'] = str(100 - res) + '%'
     resultObj[method][provider]['avgNumberOfResults'] = round(noOfResults / totalEntries, 1)
+    resultObj[method][provider]['avgNumberOfRelevantItems'] = noOfCheckedResults / totalEntries
+    resultObj[method][provider]['proportionOfRelevantItems'] = noOfCheckedResults / noOfResults
+
 
 
 def getSearchResultsStatistics(data):
@@ -93,15 +117,31 @@ def buildStatistics(data):
             userStatistics[key][userData[key][i].extraInfo['scenarioId']] = {}
 
     totalAvg = 0
-    githubWithTags = 0
-    githubWithoutTags = 0
-    googleWithTags = 0
+    githubTotalAPKWithTags = 0
+    githubTotalAPKWithoutTags = 0
+    googleTotalAPKWithTags = 0
+    githubTotalPKWithTags = 0
+    githubTotalPKWithoutTags = 0
+    googleTotalPKWithTags = 0
+
+    githubTotalRecallWithTags = 0
+    githubTotalRecallWithoutTags = 0
+    googleTotalRecallWithTags = 0
 
     for key in userData:
         avg = 0
         githubWithoutTagsAPK = 0
         googleAPK = 0
         githubWithTagsAPK = 0
+
+        githubWithoutTagsPK = 0
+        googlePK = 0
+        githubWithTagsPK = 0
+
+        githubWithoutTagsRecall = 0
+        googleRecall = 0
+        githubWithTagsRecall = 0
+
         googleInvalidCount = 0
         for i in range(0, len(userData[key])):
             time = 0
@@ -118,18 +158,52 @@ def buildStatistics(data):
                 userData[key][i].githubPreferences['google']['checked']) if len(
                 userData[key][i].githubLinks['google']['links']) > 0 else 0
 
-            if 'valid' in userData[key][i].githubLinks['google'] and not userData[key][i].githubLinks['google'][
-                'valid']:
-                googleInvalidCount += 1
-
             userStatistics[key][id]['APKGithubWithTags'] = getAPK(
                 userData[key][i].ownLinks['links'],
                 userData[key][i].ownPreferences['checked']) if len(
                 userData[key][i].ownLinks['links']) > 0 else 0
 
+            # compute P@K for each technique
+            userStatistics[key][id]['PKGithubWithoutTags'] = getPrecisionK(
+                userData[key][i].githubLinks['github']['links'],
+                userData[key][i].githubPreferences['github']['checked'])
+
+            userStatistics[key][id]['PKGoogle'] = getPrecisionK(
+                userData[key][i].githubLinks['google']['links'],
+                userData[key][i].githubPreferences['google']['checked'])
+
+            userStatistics[key][id]['PKGithubWithTags'] = getPrecisionK(
+                userData[key][i].ownLinks['links'],
+                userData[key][i].ownPreferences['checked'])
+
+            # compute Recall@K for each technique
+            userStatistics[key][id]['RecallGithubWithoutTags'] = getRecallK(
+                userData[key][i].githubLinks['github']['links'],
+                userData[key][i].githubPreferences['github']['checked'])
+
+            userStatistics[key][id]['RecallGoogle'] = getRecallK(
+                userData[key][i].githubLinks['google']['links'],
+                userData[key][i].githubPreferences['google']['checked'])
+
+            userStatistics[key][id]['RecallGithubWithTags'] = getRecallK(
+                userData[key][i].ownLinks['links'],
+                userData[key][i].ownPreferences['checked'])
+
+            if 'valid' in userData[key][i].githubLinks['google'] and not userData[key][i].githubLinks['google'][
+                'valid']:
+                googleInvalidCount += 1
+
             githubWithoutTagsAPK += userStatistics[key][id]['APKGithubWithoutTags']
             githubWithTagsAPK += userStatistics[key][id]['APKGithubWithTags']
             googleAPK += userStatistics[key][id]['APKGoogle']
+
+            githubWithoutTagsPK += userStatistics[key][id]['PKGithubWithoutTags']
+            githubWithTagsPK += userStatistics[key][id]['PKGithubWithTags']
+            googlePK += userStatistics[key][id]['PKGoogle']
+
+            githubWithoutTagsRecall += userStatistics[key][id]['RecallGithubWithoutTags']
+            githubWithTagsRecall += userStatistics[key][id]['RecallGithubWithTags']
+            googleRecall += userStatistics[key][id]['RecallGoogle']
 
             if i == 0:
                 time = userData[key][0].extraInfo['endTime'] - userData[key][0].extraInfo['startTimeTask']
@@ -151,16 +225,37 @@ def buildStatistics(data):
 
         userStatistics[key]['averageUserTime'] = convertInTime(avg / len(userData[key]))
 
+        # APK
         userStatistics[key]['githubWithTagsAPKAverage'] = githubWithTagsAPK / len(userData[key])
         userStatistics[key]['githubWithoutTagsAPKAverage'] = githubWithoutTagsAPK / len(userData[key])
         userStatistics[key]['googleAPKAverage'] = googleAPK / (len(userData[key]) - googleInvalidCount) if (len(
             userData[key]) - googleInvalidCount) > 0 else 1
 
-        githubWithTags += userStatistics[key]['githubWithTagsAPKAverage']
+        # PK
+        userStatistics[key]['githubWithTagsPKAverage'] = githubWithTagsPK / len(userData[key])
+        userStatistics[key]['githubWithoutTagsPKAverage'] = githubWithoutTagsPK / len(userData[key])
+        userStatistics[key]['googlePKAverage'] = googlePK / (len(userData[key]) - googleInvalidCount) if (len(
+            userData[key]) - googleInvalidCount) > 0 else 1
 
-        githubWithoutTags += userStatistics[key]['githubWithoutTagsAPKAverage']
+        # Recall
+        userStatistics[key]['githubWithTagsRecallAverage'] = githubWithTagsPK / len(userData[key])
+        userStatistics[key]['githubWithoutTagsRecallAverage'] = githubWithoutTagsPK / len(userData[key])
+        userStatistics[key]['googleRecallAverage'] = googlePK / (len(userData[key]) - googleInvalidCount) if (len(
+            userData[key]) - googleInvalidCount) > 0 else 1
 
-        googleWithTags += userStatistics[key]['googleAPKAverage']
+        # APK
+        githubTotalAPKWithTags += userStatistics[key]['githubWithTagsAPKAverage']
+        githubTotalAPKWithoutTags += userStatistics[key]['githubWithoutTagsAPKAverage']
+        googleTotalAPKWithTags += userStatistics[key]['googleAPKAverage']
+
+        # PK
+        githubTotalPKWithTags += userStatistics[key]['githubWithTagsPKAverage']
+        githubTotalPKWithoutTags += userStatistics[key]['githubWithoutTagsPKAverage']
+        googleTotalPKWithTags += userStatistics[key]['googlePKAverage']
+
+        githubTotalRecallWithTags += userStatistics[key]['githubWithTagsPKAverage']
+        githubTotalRecallWithoutTags += userStatistics[key]['githubWithoutTagsPKAverage']
+        googleTotalRecallWithTags += userStatistics[key]['googlePKAverage']
 
         totalAvg += avg
 
@@ -171,12 +266,31 @@ def buildStatistics(data):
     for key in scenarioStatistics:
         scenarioStatistics[key]['averageTime'] = convertInTime(
             scenarioStatistics[key]['averageTime'] / scenarioStatistics[key]['noOfAnswers'])
-
-        searchStatistics['searchWithTags']['github']['MAPK'] = githubWithTags / scenarioStatistics[key]['noOfAnswers']
-        searchStatistics['searchWithTags']['google']['MAPK'] = googleWithTags / scenarioStatistics[key][
-            'noOfAnswersGoogleValid']
-        searchStatistics['searchWithoutTags']['github']['MAPK'] = githubWithoutTags / scenarioStatistics[key][
+        # MAPK
+        searchStatistics['searchWithTags']['github']['MAPK'] = githubTotalAPKWithTags / scenarioStatistics[key][
             'noOfAnswers']
+        searchStatistics['searchWithTags']['google']['MAPK'] = googleTotalAPKWithTags / scenarioStatistics[key][
+            'noOfAnswersGoogleValid']
+        searchStatistics['searchWithoutTags']['github']['MAPK'] = githubTotalAPKWithoutTags / scenarioStatistics[key][
+            'noOfAnswers']
+        # AVERAGEPK (MAPK2)
+        searchStatistics['searchWithTags']['github']['AveragePK'] = githubTotalPKWithTags / scenarioStatistics[key][
+            'noOfAnswers']
+        searchStatistics['searchWithTags']['google']['AveragePK'] = googleTotalPKWithTags / scenarioStatistics[key][
+            'noOfAnswersGoogleValid']
+        searchStatistics['searchWithoutTags']['github']['AveragePK'] = githubTotalPKWithoutTags / \
+                                                                       scenarioStatistics[key][
+                                                                           'noOfAnswers']
+        # AverageRecall
+        searchStatistics['searchWithTags']['github']['AverageRecall'] = githubTotalRecallWithTags / \
+                                                                        scenarioStatistics[key][
+                                                                            'noOfAnswers']
+        searchStatistics['searchWithTags']['google']['AverageRecall'] = googleTotalRecallWithTags / \
+                                                                        scenarioStatistics[key][
+                                                                            'noOfAnswersGoogleValid']
+        searchStatistics['searchWithoutTags']['github']['AverageRecall'] = githubTotalRecallWithoutTags / \
+                                                                           scenarioStatistics[key][
+                                                                               'noOfAnswers']
 
     return {'userStatistics': userStatistics, 'scenarioStatistics': scenarioStatistics,
             'searchResultStatistics': searchStatistics}
