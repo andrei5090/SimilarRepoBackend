@@ -1,6 +1,7 @@
 from schemas import Feedback, CreateAndUpdateFeedback
 from .metrics import apk, precision_at_k, recall_at_k
 from .google import google_search
+import numpy as np
 
 
 def convertInTime(millis):
@@ -78,7 +79,6 @@ def getSearchResultStatisticsPerMethod(data, method, provider, resultObj, own=Tr
     resultObj[method][provider]['avgNumberOfResults'] = round(noOfResults / totalEntries, 1)
     resultObj[method][provider]['avgNumberOfRelevantItems'] = noOfCheckedResults / totalEntries
     resultObj[method][provider]['proportionOfRelevantItems'] = noOfCheckedResults / noOfResults
-
 
 
 def getSearchResultsStatistics(data):
@@ -263,7 +263,13 @@ def buildStatistics(data):
 
     searchStatistics = getSearchResultsStatistics(data)
 
+    scenarioAvg = {}
+
     for key in scenarioStatistics:
+        scenarioAvg[key] = {'searchWithTags': {'github': {'APK': [], 'PK': [], 'RecallK': []},
+                                               'google': {'APK': [], 'PK': [], 'RecallK': []}},
+                            'searchWithoutTags': {'github': {'APK': [], 'PK': [], 'RecallK': []}}}
+
         scenarioStatistics[key]['averageTime'] = convertInTime(
             scenarioStatistics[key]['averageTime'] / scenarioStatistics[key]['noOfAnswers'])
         # MAPK
@@ -291,6 +297,54 @@ def buildStatistics(data):
         searchStatistics['searchWithoutTags']['github']['AverageRecall'] = githubTotalRecallWithoutTags / \
                                                                            scenarioStatistics[key][
                                                                                'noOfAnswers']
+    # build statistics per scenario based on user scenario
+    for key in userData:
+        for i in range(0, len(userData[key])):
+            id = userData[key][i].extraInfo['scenarioId']
+
+            #APK
+            scenarioAvg[id]['searchWithoutTags']['github']['APK'].append(userStatistics[key][id]['APKGithubWithoutTags'])
+
+            if not('valid' in userData[key][i].githubLinks['google'] and not userData[key][i].githubLinks['google'][
+                'valid']):
+                scenarioAvg[id]['searchWithTags']['google']['APK'].append(userStatistics[key][id]['APKGoogle'])
+
+            scenarioAvg[id]['searchWithTags']['github']['APK'].append(userStatistics[key][id]['APKGithubWithTags'])
+
+            #PK
+            scenarioAvg[id]['searchWithoutTags']['github']['PK'].append(userStatistics[key][id]['PKGithubWithoutTags'])
+
+            if not ('valid' in userData[key][i].githubLinks['google'] and not userData[key][i].githubLinks['google'][
+                'valid']):
+                scenarioAvg[id]['searchWithTags']['google']['PK'].append(userStatistics[key][id]['PKGoogle'])
+
+            scenarioAvg[id]['searchWithTags']['github']['PK'].append(userStatistics[key][id]['PKGithubWithTags'])
+
+            #RecallK
+            scenarioAvg[id]['searchWithoutTags']['github']['RecallK'].append(userStatistics[key][id]['RecallGithubWithoutTags'])
+
+            if not ('valid' in userData[key][i].githubLinks['google'] and not userData[key][i].githubLinks['google'][
+                'valid']):
+                scenarioAvg[id]['searchWithTags']['google']['RecallK'].append(userStatistics[key][id]['RecallGoogle'])
+
+            scenarioAvg[id]['searchWithTags']['github']['RecallK'].append(userStatistics[key][id]['RecallGithubWithTags'])
+
+    #build scenario averages
+    for key in userData:
+        for i in range(0, len(userData[key])):
+            id = userData[key][i].extraInfo['scenarioId']
+            scenarioStatistics[id]['githubWithoutTagsMAPK'] = np.mean(scenarioAvg[id]['searchWithoutTags']['github']['APK'])
+            scenarioStatistics[id]['githubWithTagsMAPK'] = np.mean(scenarioAvg[id]['searchWithTags']['github']['APK'])
+            scenarioStatistics[id]['googleWithTagsMAPK'] = np.mean(scenarioAvg[id]['searchWithTags']['google']['APK'])
+
+            scenarioStatistics[id]['githubWithoutTagsAveragePK'] = np.mean(scenarioAvg[id]['searchWithoutTags']['github']['PK'])
+            scenarioStatistics[id]['githubWithTagsAveragePK'] = np.mean(scenarioAvg[id]['searchWithTags']['github']['PK'])
+            scenarioStatistics[id]['googleWithTagsAveragePK'] = np.mean(scenarioAvg[id]['searchWithTags']['google']['PK'])
+
+            scenarioStatistics[id]['githubWithoutTagsAverageRecallK'] = np.mean(scenarioAvg[id]['searchWithoutTags']['github']['RecallK'])
+            scenarioStatistics[id]['githubWithTagsAverageRecallK'] = np.mean(scenarioAvg[id]['searchWithTags']['github']['RecallK'])
+            scenarioStatistics[id]['googleWithTagsAverageRecallK'] = np.mean(scenarioAvg[id]['searchWithTags']['google']['RecallK'])
+
 
     return {'userStatistics': userStatistics, 'scenarioStatistics': scenarioStatistics,
             'searchResultStatistics': searchStatistics}
