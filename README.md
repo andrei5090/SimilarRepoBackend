@@ -41,4 +41,4 @@ The database should contain a table named `feedback` with the following structur
 `uvicorn main:app --reload` or run `python main.py`
 
 ## Info
-The application will lauch by default on the port `8000` and can be accessed using `localhost:800`
+The application will lauch by default on the port `8000` and can be accessed using `localhost:8000`
