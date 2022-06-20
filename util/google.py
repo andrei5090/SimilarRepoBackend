@@ -1,9 +1,9 @@
 import requests
 
-API_KEY = "AIzaSyB81vXMOsNOF-xRo_Lh7NXKaA3u9BQgWqA"
-SEARCH_ENGINE_ID = "5ab9439e0450be483"
+# TODO: ADD Google Programmable Search api key and search engine id
+API_KEY = ""
+SEARCH_ENGINE_ID = ""
 
-#https://www.googleapis.com/customsearch/v1/siterestrict?key=AIzaSyB81vXMOsNOF-xRo_Lh7NXKaA3u9BQgWqA&cx=5ab9439e0450be483&q=test&start=1
 def get_start_no(page):
     return (page - 1) * 10 + 1
 
