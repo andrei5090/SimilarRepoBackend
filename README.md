@@ -19,6 +19,12 @@ are limited to their training data and cannot adapt to newly published repositor
 During our research, we aim to address the recommendation generality gap in recommending similar
 repositories. 
 
+## Environment
+We recommend to use a conda environment before going to the next steps.
+
+You can create one using: `conda create --name similarRepoBackend`
+And activate it using: `conda activate similarRepoBackend`
+
 ## Initial Setup
 Run: `pip install -r requirements.txt`
 
